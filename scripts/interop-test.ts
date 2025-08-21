@@ -1,26 +1,23 @@
-import { ethers } from "hardhat";
+import { ethers, config } from "hardhat";
 import { Provider, utils, Wallet, types } from "zksync-ethers";
 import { getGwBlockForBatch, waitForGatewayInteropRoot } from '../utils/interop-utils'
 import { Game, GameAggregator } from "../typechain-types";
 
 const PRIVATE_KEY = "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
 
-// verify these endpoints in zksync-era/chains/<CHAIN>/configs/general.yaml
-const CHAIN1_RPC = "http://localhost:3050"; // era
-const CHAIN2_RPC = "http://localhost:3450"; // zk_chain_2
-const GW_RPC     = "http://localhost:3250"; // gateway
-// verify this value in zksync-era/chains/gateway/ZkStack.yaml
-const GW_CHAIN_ID = BigInt("506");
-
 const GAME_ADDRESS = "0x108bD5e0cd98eBD83C2131A19dD895B7e54761cf";
-const AGGREGATOR_ADDRESS = "0xc8F8cE6491227a6a2Ab92e67a64011a4Eba1C6CF";
+const AGGREGATOR_ADDRESS = "0x98Cf1bc237B4817306E7f44C9207042d88593c40";
+
+const networks = config.networks as any;
+const CHAIN1_RPC = networks.gameChain.url; // era
+const CHAIN2_RPC = networks.aggregatorChain.url; // zk_chain_2
+const GW_RPC     = networks.gateway.url; // gateway
+const GW_CHAIN_ID = BigInt(networks.gateway.chainId);
 
 async function main() {
-  if (!PRIVATE_KEY) throw new Error("Missing PRIVATE_KEY");
-
   // Chain 1
   const providerChain1 = new Provider(CHAIN1_RPC);
-  const providerl1 = new Provider("http://localhost:8545");
+  const providerl1 = new Provider(networks.l1.url);
   const walletChain1 = new Wallet(PRIVATE_KEY, providerChain1, providerl1);
 
   // Chain 2
@@ -32,10 +29,10 @@ async function main() {
 
   const game: Game  = await ethers.getContractAt("Game", GAME_ADDRESS, walletChain1);
   // to get over 20 min score max
-  // await getInitialHighScore(game); 
+  await getInitialHighScore(game); 
 
   const iScore = await game.highestScore();
-  console.log('score', iScore)
+  console.log('score', iScore);
 
   const tx = await game.incrementScore();
 
@@ -67,17 +64,24 @@ async function main() {
   [walletChain1.address, score]
 );
 
-  // verify the message on Chain 2
+  // verify the score in the game aggregator chain
   const aggregator: GameAggregator  = await ethers.getContractAt("GameAggregator", AGGREGATOR_ADDRESS, walletChain2);
   const srcChainId = (await walletChain1.provider.getNetwork()).chainId;
-  const included = await aggregator.proveScore(
+  await aggregator.proveScore(
     srcChainId,
     logs.l1BatchNumber,
     logs.transactionIndex,
     { txNumberInBatch: logs.transactionIndex, sender: GAME_ADDRESS, data: message },
     gwProof
   );
-  console.log("message is verified on chain 2:", included);
+  console.log("score is verified on aggregator");
+
+  await utils.sleep(3_000);
+
+  const aggregatorHighScore = await aggregator.highestScore();
+  console.log("Aggregator high score:", aggregatorHighScore);
+  const winningChainId = await aggregator.winningChainId();
+  console.log("Winning chain ID:", winningChainId);
 }
 
 async function waitForScoreToIncrement(initialScore: bigint, game: Game){
@@ -103,6 +107,7 @@ async function getLogs(receipt: types.TransactionReceipt, paddedAddress: string)
         return l2ToL1LogIndex;
       }
       tries = tries + 1;
+      await utils.sleep(1_000);
   }
   throw new Error("Could not find our interop log in receipt.l2ToL1Logs");
   
@@ -121,6 +126,7 @@ async function getGwProof(providerChain1: Provider, txHash: string, l2ToL1LogInd
     return gwProofResp?.proof;
   }
     tries = tries + 1;
+    await utils.sleep(1_000);
   }
   throw new Error("Gateway proof not ready yet");
 }
