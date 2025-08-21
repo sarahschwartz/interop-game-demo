@@ -1,0 +1,36 @@
+import Spinner from "./Spinner";
+
+export function Status({
+  color,
+  text,
+  isLoading,
+}: {
+  color: string;
+  text: string;
+  isLoading?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        height: "28px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "6px",
+      }}
+    >
+      <div style={{ display: "flex" }}>
+        {isLoading ? (
+          <div style={{transform: "scale(0.6"}}>
+          <Spinner />
+          </div>
+        ) : (
+          <svg width="10" height="10">
+            <circle cx="5" cy="5" r="5" fill={color} stroke-width="4" />
+          </svg>
+        )}
+      </div>
+      <p>{text}</p>
+    </div>
+  );
+}

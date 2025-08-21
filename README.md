@@ -74,8 +74,18 @@ bun interop
 
 ### Running the frontend
 
-Move out of the `contracts` folder and into the `frontend` folder:
+Move out of the `contracts` folder and into the `frontend` folder.
+Then install the dependencies:
 
 ```bash
 cd ../frontend
+bun install
 ```
+
+Run the frontend:
+
+```bash
+bun dev
+```
+
+Open the frontend at [`http://localhost:5173/`](http://localhost:5173/).
