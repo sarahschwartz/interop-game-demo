@@ -26,6 +26,12 @@ See the [`interop-test`](https://github.com/sarahschwartz/interop-test) repo for
 
 Update the chain RPC URLs in `hardhat.config.ts`.
 
+### Move into the `contracts` folder
+
+```bash
+cd contracts
+```
+
 ### Install the Dependencies
 
 ```bash
@@ -64,4 +70,12 @@ Then test that everything works by running the script:
 
 ```bash
 bun interop
+```
+
+### Running the frontend
+
+Move out of the `contracts` folder and into the `frontend` folder:
+
+```bash
+cd ../frontend
 ```
