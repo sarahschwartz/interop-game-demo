@@ -1,19 +1,19 @@
 import { useReadContract } from "wagmi";
-import * as aggregatorABI from "../../../contracts/artifacts/contracts/GameAggregator.sol/GameAggregator.json";
-import { AGGREGATOR_ADDRESS } from "../../utils/constants";
+import * as leaderboardABI from "../../../contracts/artifacts/contracts/GameLeaderboard.sol/GameLeaderboard.json";
+import { LEADERBOARD_ADDRESS } from "../../utils/constants";
 import { wagmiConfig, zkChain2 } from "../../utils/wagmi";
 import { useEffect } from "react";
 
-export function AggregatorStats({ update }: { update: number}) {
+export function LeaderboardStats({ update }: { update: number}) {
   const { data: hsData, refetch: refetchHsData } = useReadContract({
-    abi: aggregatorABI.abi,
-    address: AGGREGATOR_ADDRESS,
+    abi: leaderboardABI.abi,
+    address: LEADERBOARD_ADDRESS,
     functionName: "highestScore",
     chainId: zkChain2.id,
   });
   const { data: winningData, refetch: refetchWinningData } = useReadContract({
-    abi: aggregatorABI.abi,
-    address: AGGREGATOR_ADDRESS,
+    abi: leaderboardABI.abi,
+    address: LEADERBOARD_ADDRESS,
     functionName: "winningChainId",
     chainId: zkChain2.id,
   });
@@ -33,7 +33,7 @@ export function AggregatorStats({ update }: { update: number}) {
 
   return (
     <div>
-      <h3>Network Leaderboard (Aggregator)</h3>
+      <h3>Network Leaderboard</h3>
       <p>
         Winning Chain: {winningChainName} ({winningChainId})
       </p>

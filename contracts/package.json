@@ -4,7 +4,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "deploy:game": "hardhat run ./scripts/deploy-game.ts",
-    "deploy:aggregator": "hardhat run ./scripts/deploy-aggregator.ts",
+    "deploy:leaderboard": "hardhat run ./scripts/deploy-leaderboard.ts",
     "interop": "hardhat run ./scripts/interop-test.ts"
   },
   "devDependencies": {

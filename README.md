@@ -1,14 +1,14 @@
 # Interop Game Demo
 
 This repo contains a smart contract game to test sending and verifying interop messages in smart contracts.
-There are two main contracts: `Game` and `GameAggregator`.
+There are two main contracts: `Game` and `GameLeaderboard`.
 
 The game contract has one public function: `incrementScore`.
 This function increments the player's high score.
 If that high score is higher than the global `highestScore`,
 the global `highestScore` is updated, and an interop message is broadcast of the player's address and the new `highestScore`.
 
-The game aggregator contract's main function is `proveScore`.
+The game leaderboard contract's main function is `proveScore`.
 A player from any chain can submit a message broadcast from one of the approved game contracts set in the constructor function.
 The contract tracks the highest score for each chain,
 the global highest score for all chains,
@@ -52,14 +52,14 @@ Deploy the Game contract:
 bun deploy:game
 ```
 
-### Deploy the Game Aggregator
+### Deploy the Game Leaderboard
 
-Update the approved chain IDs and game contracts in the `scripts/deploy-aggregator.ts` file.
+Update the approved chain IDs and game contracts in the `scripts/deploy-leaderboard.ts` file.
 
-Then deploy the Game aggregator contract:
+Then deploy the Game leaderboard contract:
 
 ```bash
-bun deploy:aggregator
+bun deploy:leaderboard
 ```
 
 ### Running the test

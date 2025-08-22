@@ -1,5 +1,5 @@
 import "./App.css";
-import { AggregatorView } from "./components/AggregatorView";
+import { LeaderboardView } from "./components/LeaderboardView";
 import { GameView } from "./components/GameView";
 import { useAccount, useConnect, useSwitchChain } from "wagmi";
 import { injected } from "@wagmi/connectors";
@@ -43,7 +43,7 @@ function App() {
               </h2>
               <SwitchChains/>
               {chain?.id === zkChain2.id ? (
-                <AggregatorView playerAddress={address} />
+                <LeaderboardView playerAddress={address} />
               ) : (
                 <GameView playerAddress={address} />
               )}

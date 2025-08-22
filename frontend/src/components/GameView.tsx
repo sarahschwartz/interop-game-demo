@@ -1,5 +1,5 @@
 import { GAME_ADDRESS, GREEN } from "../../utils/constants";
-import { AggregatorStats } from "./AggregatorStatus";
+import { LeaderboardStats } from "./LeaderboardStats";
 import { CheckIconWithText } from "./CheckIconWithText";
 import gameABI from "../../../contracts/artifacts/contracts/Game.sol/Game.json";
 import { zkChain1 } from "../../utils/wagmi";
@@ -75,7 +75,7 @@ export function GameView({ playerAddress }: { playerAddress: `0x${string}` }) {
         <p>Your High Score: {playerHighestScore}</p>
         <p>Game High Score: {highestScore}</p>
       </div>
-      <AggregatorStats update={update} />
+      <LeaderboardStats update={update} />
     </div>
   );
 }

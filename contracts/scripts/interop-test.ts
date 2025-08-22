@@ -4,17 +4,17 @@ import {
   getGwBlockForBatch,
   waitForGatewayInteropRoot,
 } from "../utils/interop-utils";
-import { Game, GameAggregator } from "../typechain-types";
+import { Game, GameLeaderboard } from "../typechain-types";
 
 const PRIVATE_KEY =
   "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
 
 const GAME_ADDRESS = "0x7A03C544695751Fe78FC75C6C1397e4601579B1f";
-const AGGREGATOR_ADDRESS = "0x6C2DFbdF0714FC8CE065039911758b2821818745";
+const LEADERBOARD_ADDRESS = "0x6C2DFbdF0714FC8CE065039911758b2821818745";
 
 const networks = config.networks as any;
 const CHAIN1_RPC = networks.gameChain.url; // zk_chain_1
-const CHAIN2_RPC = networks.aggregatorChain.url; // zk_chain_2
+const CHAIN2_RPC = networks.leaderboard.url; // zk_chain_2
 const GW_RPC = networks.gateway.url; // gateway
 const GW_CHAIN_ID = BigInt(networks.gateway.chainId);
 
@@ -84,14 +84,14 @@ async function main() {
     [walletChain1.address, score]
   );
 
-  // verify the score in the game aggregator chain
-  const aggregator: GameAggregator = await ethers.getContractAt(
-    "GameAggregator",
-    AGGREGATOR_ADDRESS,
+  // verify the score in the game leaderboard chain
+  const leaderboard: GameLeaderboard = await ethers.getContractAt(
+    "GameLeaderboard",
+    LEADERBOARD_ADDRESS,
     walletChain2
   );
   const srcChainId = (await walletChain1.provider.getNetwork()).chainId;
-  await aggregator.proveScore(
+  await leaderboard.proveScore(
     srcChainId,
     logs.l1BatchNumber,
     logs.transactionIndex,
@@ -102,13 +102,13 @@ async function main() {
     },
     gwProof
   );
-  console.log("score is verified on aggregator");
+  console.log("score is verified on leaderboard");
 
   await utils.sleep(3_000);
 
-  const aggregatorHighScore = await aggregator.highestScore();
-  console.log("Aggregator high score:", aggregatorHighScore);
-  const winningChainId = await aggregator.winningChainId();
+  const leaderboardHighScore = await leaderboard.highestScore();
+  console.log("Leaderboard high score:", leaderboardHighScore);
+  const winningChainId = await leaderboard.winningChainId();
   console.log("Winning chain ID:", winningChainId);
 }
 

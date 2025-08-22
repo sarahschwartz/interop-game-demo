@@ -1,9 +1,9 @@
-import { AggregatorStats } from "./AggregatorStatus";
+import { LeaderboardStats } from "./LeaderboardStats";
 import { CheckIconWithText } from "./CheckIconWithText";
 import { Status } from "./Status";
-import { AGGREGATOR_ADDRESS, GREEN } from "../../utils/constants";
+import { LEADERBOARD_ADDRESS, GREEN } from "../../utils/constants";
 import { useEffect, useState } from "react";
-import * as aggregatorABI from "../../../contracts/artifacts/contracts/GameAggregator.sol/GameAggregator.json";
+import * as leaderboardABI from "../../../contracts/artifacts/contracts/GameLeaderboard.sol/GameLeaderboard.json";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import {
   checkIfTxIsFinalized,
@@ -13,7 +13,7 @@ import {
   waitForInteropRoot,
 } from "../../utils/prove";
 
-export function AggregatorView({
+export function LeaderboardView({
   playerAddress,
 }: {
   playerAddress: `0x${string}`;
@@ -51,8 +51,8 @@ export function AggregatorView({
 
     const args = await getProveScoreArgs(score, playerAddress, logs, proof);
     writeContract({
-      abi: aggregatorABI.abi,
-      address: AGGREGATOR_ADDRESS,
+      abi: leaderboardABI.abi,
+      address: LEADERBOARD_ADDRESS,
       functionName: "proveScore",
       args,
     });
@@ -68,6 +68,8 @@ export function AggregatorView({
     setIsFinalized(false);
     setIsProofReady(false);
     setIsRootUpdated(false);
+    setScore(0);
+    setTxHash("");
   }
 
   useEffect(() => {
@@ -76,7 +78,7 @@ export function AggregatorView({
 
   return (
     <div className="card">
-      <CheckIconWithText color="#B3A5E5" text="Aggregator contract detected" />
+      <CheckIconWithText color="#B3A5E5" text="Leaderboard contract detected" />
       {!isPending ? (
         <>
           <div
@@ -144,7 +146,7 @@ export function AggregatorView({
             <Status
               isLoading={!isSuccess}
               color={GREEN}
-              text={isSuccess ? "Proved on Aggregator" : "Proving on Aggregator"}
+              text={isSuccess ? "Proved on Leaderboard" : "Proving on Leaderboard"}
             />
           )}
           {isSuccess && (
@@ -157,7 +159,7 @@ export function AggregatorView({
           {isConfirmed && <button className="buttonSmall" onClick={handleReset}>Reset</button>}
         </div>
       )}
-      <AggregatorStats update={update} />
+      <LeaderboardStats update={update} />
     </div>
   );
 }

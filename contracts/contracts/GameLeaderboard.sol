@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 import {L2MessageVerification} from "./utils/L2MessageVerification.sol";
 import {L2Message} from "./utils/Messaging.sol";
 
-contract GameAggregator {
+contract GameLeaderboard {
     struct HighScore {
         uint256 score;
         address player;

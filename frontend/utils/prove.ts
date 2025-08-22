@@ -1,7 +1,7 @@
 import { Provider, types, utils, Contract, Wallet } from "zksync-ethers";
 import { zkChain1, zkChain2 } from "./wagmi";
 import { ethers, JsonRpcProvider } from "ethers";
-import { GAME_ADDRESS, gatewayChainId, gatewayRPC, l1RPC } from "./constants";
+import { GAME_ADDRESS, GATEWAY_CHAIN_ID, GATEWAY_RPC, l1RPC } from "./constants";
 
 const providerChain1 = new Provider(zkChain1.rpcUrls.default.http[0]);
 export async function checkIfTxIsFinalized(txHash: string) {
@@ -38,7 +38,7 @@ export async function getGatewayProof(
 export async function waitForInteropRoot(
   logs: types.L2ToL1Log,
 ) {
-  const gw = new ethers.JsonRpcProvider(gatewayRPC);
+  const gw = new ethers.JsonRpcProvider(GATEWAY_RPC);
 
   // wait for the interop root to update
   const gwBlock = await getGwBlockForBatch(
@@ -46,7 +46,7 @@ export async function waitForInteropRoot(
     providerChain1,
     gw
   );
-  await waitForGatewayInteropRoot(BigInt(gatewayChainId), gwBlock);
+  await waitForGatewayInteropRoot(BigInt(GATEWAY_CHAIN_ID), gwBlock);
   console.log("interop root is updated");
 }
 
@@ -97,6 +97,7 @@ async function getLogs(
   }
   throw new Error("Could not find our interop log in receipt.l2ToL1Logs");
 }
+
 async function getGwProof(
   providerChain1: Provider,
   txHash: string,

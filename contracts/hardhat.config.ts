@@ -5,13 +5,17 @@ const config: HardhatUserConfig = {
   solidity: "0.8.24",
   networks: {
   // If running locally with ZKsync Stack:
-  // Verify these endpoints in zksync-era/chains/<CHAIN>/configs/general.yaml
-    gameChain: {
+  // Verify the RPC endpoints in zksync-era/chains/<CHAIN>/configs/general.yaml
+    gameChain1: {
       url: "http://localhost:3650",
       // Verify this value in zksync-era/chains/<CHAIN>/ZkStack.yaml
       chainId: 62348,
     },
-    aggregatorChain: {
+    gameChain2: {
+      url: "http://localhost:3750",
+      chainId: 62348,
+    },
+    leaderboardChain: {
       url: "http://localhost:3450",
     },
     gateway: {
