@@ -7,7 +7,9 @@ const config: HardhatUserConfig = {
   // If running locally with ZKsync Stack:
   // Verify these endpoints in zksync-era/chains/<CHAIN>/configs/general.yaml
     gameChain: {
-      url: "http://localhost:3050",
+      url: "http://localhost:3650",
+      // Verify this value in zksync-era/chains/<CHAIN>/ZkStack.yaml
+      chainId: 62348,
     },
     aggregatorChain: {
       url: "http://localhost:3450",

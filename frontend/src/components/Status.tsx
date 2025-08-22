@@ -26,7 +26,7 @@ export function Status({
           </div>
         ) : (
           <svg width="10" height="10">
-            <circle cx="5" cy="5" r="5" fill={color} stroke-width="4" />
+            <circle cx="5" cy="5" r="5" fill={color} strokeWidth="4" />
           </svg>
         )}
       </div>
