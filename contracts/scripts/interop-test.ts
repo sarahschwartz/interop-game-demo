@@ -5,48 +5,60 @@ import {
   waitForGatewayInteropRoot,
 } from "../utils/interop-utils";
 import { Game, GameLeaderboard } from "../typechain-types";
+import { GAME_CHAIN_1_CONTRACT_ADDRESS, GAME_CHAIN_2_CONTRACT_ADDRESS } from "../utils/deployedContracts"
 
 const PRIVATE_KEY =
   "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
 
-const GAME_ADDRESS = "0x7A03C544695751Fe78FC75C6C1397e4601579B1f";
-const LEADERBOARD_ADDRESS = "0x6C2DFbdF0714FC8CE065039911758b2821818745";
+const LEADERBOARD_ADDRESS = "0xf10A110E59a22b444c669C83b02f0E6d945b2b69";
 
 const networks = config.networks as any;
-const CHAIN1_RPC = networks.gameChain.url; // zk_chain_1
-const CHAIN2_RPC = networks.leaderboard.url; // zk_chain_2
+const GAME_CHAIN_1_RPC = networks.gameChain1.url;
+const GAME_CHAIN_2_RPC = networks.gameChain2.url;
+const LEADERBOARD_CHAIN_RPC = networks.leaderboardChain.url;
 const GW_RPC = networks.gateway.url; // gateway
 const GW_CHAIN_ID = BigInt(networks.gateway.chainId);
-
-// Chain 1
-const providerChain1 = new Provider(CHAIN1_RPC);
 const providerl1 = new Provider(networks.l1.url);
+
+// Game Chain 1
+const providerChain1 = new Provider(GAME_CHAIN_1_RPC);
 const walletChain1 = new Wallet(PRIVATE_KEY, providerChain1, providerl1);
 
-// Chain 2
-const providerChain2 = new Provider(CHAIN2_RPC);
+// Game Chain 1
+const providerChain2 = new Provider(GAME_CHAIN_2_RPC);
 const walletChain2 = new Wallet(PRIVATE_KEY, providerChain2, providerl1);
+
+// Leaderboard
+const providerLeaderbaord = new Provider(LEADERBOARD_CHAIN_RPC);
+const walletLeaderboard = new Wallet(PRIVATE_KEY, providerLeaderbaord, providerl1);
 
 // ZKsync Gateway
 const gw = new ethers.JsonRpcProvider(GW_RPC);
 
 async function main() {
-  const game: Game = await ethers.getContractAt(
+  await testGameChain(GAME_CHAIN_1_CONTRACT_ADDRESS, walletChain1);
+
+  await testGameChain(GAME_CHAIN_2_CONTRACT_ADDRESS, walletChain2, true)
+}
+
+async function testGameChain(gameAddress: `0x${string}`, wallet: Wallet, getHigherScore = false){
+    const game: Game = await ethers.getContractAt(
     "Game",
-    GAME_ADDRESS,
-    walletChain1
+    gameAddress,
+    wallet
   );
-  // to get over 20 min score max
-  await getInitialHighScore(game);
+
+    // to get over 20 min score max
+  await getInitialHighScore(game, getHigherScore);
 
   const iScore = await game.highestScore();
-  console.log("score", iScore);
+  console.log("inital game high score", iScore);
 
   const tx = await game.incrementScore();
 
   console.log("waiting for receipt...");
   const receipt = await (
-    await walletChain1.provider.getTransaction(tx.hash)
+    await wallet.provider.getTransaction(tx.hash)
   ).waitFinalize();
   console.log("got tx receipt");
   if (receipt.l1BatchNumber === null || receipt.l1BatchTxIndex === null)
@@ -55,13 +67,13 @@ async function main() {
     );
 
   // Find the exact interop log: sender=0x…8008, key=pad32(EOA), value=keccak(message)
-  const paddedAddress = ethers.zeroPadValue(GAME_ADDRESS, 32);
+  const paddedAddress = ethers.zeroPadValue(gameAddress, 32);
   const l2ToL1LogIndex = await getLogs(receipt, paddedAddress);
   const logs = receipt.l2ToL1Logs[l2ToL1LogIndex];
 
   // fetch the gw proof
   const gwProof: string[] = await getGwProof(
-    walletChain1.provider,
+    wallet.provider,
     logs.transactionHash,
     logs.logIndex
   );
@@ -70,34 +82,34 @@ async function main() {
   // wait for the interop root to update
   const gwBlock = await getGwBlockForBatch(
     BigInt(logs.l1BatchNumber),
-    walletChain1.provider,
+    wallet.provider,
     gw
   );
-  await waitForGatewayInteropRoot(GW_CHAIN_ID, walletChain2, gwBlock);
+  await waitForGatewayInteropRoot(GW_CHAIN_ID, walletLeaderboard, gwBlock);
   console.log("interop root is updated");
 
   const score = await waitForScoreToIncrement(iScore, game);
-  console.log("score", score);
+  console.log("new game high score", score);
 
   const message = ethers.solidityPacked(
     ["address", "uint256"],
-    [walletChain1.address, score]
+    [wallet.address, score]
   );
 
   // verify the score in the game leaderboard chain
   const leaderboard: GameLeaderboard = await ethers.getContractAt(
     "GameLeaderboard",
     LEADERBOARD_ADDRESS,
-    walletChain2
+    walletLeaderboard
   );
-  const srcChainId = (await walletChain1.provider.getNetwork()).chainId;
+  const srcChainId = (await wallet.provider.getNetwork()).chainId;
   await leaderboard.proveScore(
     srcChainId,
     logs.l1BatchNumber,
     logs.transactionIndex,
     {
       txNumberInBatch: logs.transactionIndex,
-      sender: GAME_ADDRESS,
+      sender: gameAddress,
       data: message,
     },
     gwProof
@@ -166,9 +178,10 @@ async function getGwProof(
   throw new Error("Gateway proof not ready yet");
 }
 
-async function getInitialHighScore(game: Game) {
+async function getInitialHighScore(game: Game, getHigherScore = false) {
   let highScore: bigint = 20n;
-  while (highScore < 21n) {
+  const targetScore = getHigherScore ? 30n : 21n;
+  while (highScore < targetScore) {
     await game.incrementScore();
     await utils.sleep(1_000);
     highScore = await game.highestScore();

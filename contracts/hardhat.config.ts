@@ -6,20 +6,20 @@ const config: HardhatUserConfig = {
   networks: {
   // If running locally with ZKsync Stack:
   // Verify the RPC endpoints in zksync-era/chains/<CHAIN>/configs/general.yaml
+    leaderboardChain: {
+      url: "http://localhost:3050",
+    },
     gameChain1: {
-      url: "http://localhost:3650",
+      url: "http://localhost:3150",
       // Verify this value in zksync-era/chains/<CHAIN>/ZkStack.yaml
-      chainId: 62348,
+      chainId: 5328,
     },
     gameChain2: {
-      url: "http://localhost:3750",
-      chainId: 62348,
-    },
-    leaderboardChain: {
-      url: "http://localhost:3450",
+      url: "http://localhost:3250",
+      chainId: 9313,
     },
     gateway: {
-      url: "http://localhost:3250",
+      url: "http://localhost:3350",
       // Verify this value in zksync-era/chains/gateway/ZkStack.yaml
       chainId: 506,
     },

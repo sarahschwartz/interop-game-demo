@@ -1,22 +1,21 @@
 import { Provider, types, utils, Contract, Wallet } from "zksync-ethers";
-import { zkChain1, zkChain2 } from "./wagmi";
 import { ethers, JsonRpcProvider } from "ethers";
-import { GAME_ADDRESS, GATEWAY_CHAIN_ID, GATEWAY_RPC, l1RPC } from "./constants";
+import { GATEWAY_CHAIN_ID, GATEWAY_RPC, l1RPC } from "./constants";
+import { leaderboardChain } from "./wagmi";
 
-const providerChain1 = new Provider(zkChain1.rpcUrls.default.http[0]);
-export async function checkIfTxIsFinalized(txHash: string) {
-  const receipt = await (await providerChain1.getTransaction(txHash)).waitFinalize();
+export async function checkIfTxIsFinalized(txHash: string, provider: Provider) {
+  const receipt = await (await provider.getTransaction(txHash)).waitFinalize();
   console.log("got tx receipt");
   return receipt;
 }
 
-export async function getReceiptLogs(receipt: types.TransactionReceipt) {
+export async function getReceiptLogs(receipt: types.TransactionReceipt, gameAddress: `0x${string}`) {
   if (receipt.l1BatchNumber === null || receipt.l1BatchTxIndex === null)
     throw new Error(
       "Could not find l1BatchNumber or l1BatchTxIndex in receipt"
     );
   // Find the exact interop log: sender=0x…8008, key=pad32(EOA), value=keccak(message)
-  const paddedAddress = ethers.zeroPadValue(GAME_ADDRESS, 32);
+  const paddedAddress = ethers.zeroPadValue(gameAddress!, 32);
   const l2ToL1LogIndex = await getLogs(receipt, paddedAddress);
   const logs = receipt.l2ToL1Logs[l2ToL1LogIndex];
   return logs;
@@ -24,10 +23,11 @@ export async function getReceiptLogs(receipt: types.TransactionReceipt) {
 
 export async function getGatewayProof(
   logs: types.L2ToL1Log,
+  provider: Provider
 ) {
   // fetch the gw proof
   const gwProof: string[] = await getGwProof(
-    providerChain1,
+    provider,
     logs.transactionHash,
     logs.logIndex
   );
@@ -37,13 +37,14 @@ export async function getGatewayProof(
 
 export async function waitForInteropRoot(
   logs: types.L2ToL1Log,
+  provider: Provider
 ) {
   const gw = new ethers.JsonRpcProvider(GATEWAY_RPC);
 
   // wait for the interop root to update
   const gwBlock = await getGwBlockForBatch(
     BigInt(logs.l1BatchNumber),
-    providerChain1,
+    provider,
     gw
   );
   await waitForGatewayInteropRoot(BigInt(GATEWAY_CHAIN_ID), gwBlock);
@@ -54,7 +55,9 @@ export async function getProveScoreArgs(
   score: number,
   playerAddress: `0x${string}`,
   logs: types.L2ToL1Log,
-  gwProof: string[]
+  gwProof: string[],
+  chainId: number,
+  gameAddress: `0x${string}`
 ) {
   const message = ethers.solidityPacked(
     ["address", "uint256"],
@@ -62,12 +65,12 @@ export async function getProveScoreArgs(
   );
 
   return [
-    zkChain1.id,
+    chainId,
     logs.l1BatchNumber,
     logs.transactionIndex,
     {
       txNumberInBatch: logs.transactionIndex,
-      sender: GAME_ADDRESS,
+      sender: gameAddress,
       data: message,
     },
     gwProof,
@@ -153,7 +156,7 @@ export async function waitForGatewayInteropRoot(
 ): Promise<string> {
   const PRIVATE_KEY =
     "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
-  const providerChain2 = new Provider(zkChain2.rpcUrls.default.http[0]);
+  const providerChain2 = new Provider(leaderboardChain.rpcUrls.default.http[0]);
   const providerl1 = new Provider(l1RPC);
   const walletChain2 = new Wallet(PRIVATE_KEY, providerChain2, providerl1);
   // fetch the interop root from destiination chain

@@ -1,7 +1,6 @@
 import { LeaderboardStats } from "./LeaderboardStats";
-import { CheckIconWithText } from "./CheckIconWithText";
 import { Status } from "./Status";
-import { LEADERBOARD_ADDRESS, GREEN } from "../../utils/constants";
+import { LEADERBOARD_ADDRESS } from "../../utils/constants";
 import { useEffect, useState } from "react";
 import * as leaderboardABI from "../../../contracts/artifacts/contracts/GameLeaderboard.sol/GameLeaderboard.json";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
@@ -12,6 +11,13 @@ import {
   getReceiptLogs,
   waitForInteropRoot,
 } from "../../utils/prove";
+import {
+  gameChain1,
+  gameChain2,
+  getChainInfo,
+  getContractAddress,
+} from "../../utils/wagmi";
+import { Provider } from "zksync-ethers";
 
 export function LeaderboardView({
   playerAddress,
@@ -20,36 +26,46 @@ export function LeaderboardView({
 }) {
   const [update, setUpdate] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
+  const [chainId, setChainId] = useState<number>(gameChain1.id);
   const [txHash, setTxHash] = useState<string>("");
   const [isPending, setIsPending] = useState<boolean>(false);
   const [isFinalized, setIsFinalized] = useState<boolean>(false);
   const [isProofReady, setIsProofReady] = useState<boolean>(false);
   const [isRootUpdated, setIsRootUpdated] = useState<boolean>(false);
-  const {
-    writeContract,
-    data: proveHash,
-    isSuccess
-  } = useWriteContract();
+  const { writeContract, data: proveHash, isSuccess } = useWriteContract();
 
   const { isSuccess: isConfirmed, isLoading: isConfirming } =
-      useWaitForTransactionReceipt({ hash: proveHash });
+    useWaitForTransactionReceipt({ hash: proveHash });
 
   async function proveScore() {
-    if (!score || !txHash) {
+    if (!score || !txHash || !chainId) {
       alert("missing score or tx hash");
       return;
     }
-    console.log("proving score..");
+    const chain = getChainInfo(chainId);
+    const gameAddress = getContractAddress(chainId);
+    if (!chain || !gameAddress) {
+      alert("Game chain not supported");
+      return;
+    }
     setIsPending(true);
-    const receipt = await checkIfTxIsFinalized(txHash);
+    const provider = new Provider(chain.rpcUrls.default.http[0]);
+    const receipt = await checkIfTxIsFinalized(txHash, provider);
     setIsFinalized(true);
-    const logs = await getReceiptLogs(receipt);
-    const proof = await getGatewayProof(logs);
+    const logs = await getReceiptLogs(receipt, gameAddress);
+    const proof = await getGatewayProof(logs, provider);
     setIsProofReady(true);
-    await waitForInteropRoot(logs);
+    await waitForInteropRoot(logs, provider);
     setIsRootUpdated(true);
 
-    const args = await getProveScoreArgs(score, playerAddress, logs, proof);
+    const args = await getProveScoreArgs(
+      score,
+      playerAddress,
+      logs,
+      proof,
+      chainId,
+      gameAddress
+    );
     writeContract({
       abi: leaderboardABI.abi,
       address: LEADERBOARD_ADDRESS,
@@ -78,7 +94,6 @@ export function LeaderboardView({
 
   return (
     <div className="card">
-      <CheckIconWithText color="#B3A5E5" text="Leaderboard contract detected" />
       {!isPending ? (
         <>
           <div
@@ -105,6 +120,16 @@ export function LeaderboardView({
               type="number"
               value={score}
             />
+            <label>Game Chain:</label>
+            <select
+              id="selectedGameChain"
+              name="selectedGameChain"
+              style={{ ...styles.input, width: 160 }}
+              onChange={(e) => setChainId(Number(e.target.value))}
+            >
+              <option value={gameChain1.id}>{gameChain1.name}</option>
+              <option value={gameChain2.id}>{gameChain2.name}</option>
+            </select>
           </div>
           <div
             style={{
@@ -113,7 +138,11 @@ export function LeaderboardView({
               justifyContent: "center",
             }}
           >
-            <button className="buttonLarge" disabled={isPending} onClick={proveScore}>
+            <button
+              className="buttonLarge"
+              disabled={isPending}
+              onClick={proveScore}
+            >
               ProveScore
             </button>
           </div>
@@ -124,39 +153,56 @@ export function LeaderboardView({
           {isPending && (
             <Status
               isLoading={!isFinalized}
-              color={GREEN}
-              text={isFinalized ? "Game Transaction Finalized" : "Game Transaction Finalizing"}
+              text={
+                isFinalized
+                  ? "Game Transaction Finalized"
+                  : "Game Transaction Finalizing"
+              }
             />
           )}
           {isFinalized && (
             <Status
               isLoading={!isProofReady}
-              color={GREEN}
-              text={isProofReady ? "Message Proof Ready" : "Waiting for Message Proof"}
+              text={
+                isProofReady
+                  ? "Message Proof Ready"
+                  : "Waiting for Message Proof"
+              }
             />
           )}
           {isProofReady && (
             <Status
               isLoading={!isRootUpdated}
-              color={GREEN}
-              text={isRootUpdated ? "Interop Root Updated" : "Waiting for Interop Root"}
+              text={
+                isRootUpdated
+                  ? "Interop Root Updated"
+                  : "Waiting for Interop Root"
+              }
             />
           )}
           {isRootUpdated && (
             <Status
               isLoading={!isSuccess}
-              color={GREEN}
-              text={isSuccess ? "Proved on Leaderboard" : "Proving on Leaderboard"}
+              text={
+                isSuccess ? "Proved on Leaderboard" : "Proving on Leaderboard"
+              }
             />
           )}
           {isSuccess && (
             <Status
               isLoading={isConfirming}
-              color={GREEN}
-              text={isConfirming ? "Proof Transaction Finalizing" : "Proof Transaction Finalized"}
+              text={
+                isConfirming
+                  ? "Proof Transaction Finalizing"
+                  : "Proof Transaction Finalized"
+              }
             />
           )}
-          {isConfirmed && <button className="buttonSmall" onClick={handleReset}>Reset</button>}
+          {isConfirmed && (
+            <button className="buttonSmall" onClick={handleReset}>
+              Reset
+            </button>
+          )}
         </div>
       )}
       <LeaderboardStats update={update} />

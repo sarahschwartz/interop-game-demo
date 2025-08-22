@@ -1,8 +1,5 @@
-import { GAME_ADDRESS, GREEN } from "../../utils/constants";
 import { LeaderboardStats } from "./LeaderboardStats";
-import { CheckIconWithText } from "./CheckIconWithText";
 import gameABI from "../../../contracts/artifacts/contracts/Game.sol/Game.json";
-import { zkChain1 } from "../../utils/wagmi";
 import {
   useReadContract,
   useWaitForTransactionReceipt,
@@ -10,23 +7,26 @@ import {
 } from "wagmi";
 import Spinner from "./Spinner";
 import { useEffect, useState } from "react";
+import { getContractAddress } from "../../utils/wagmi";
 
-export function GameView({ playerAddress }: { playerAddress: `0x${string}` }) {
+export function GameView({ playerAddress, chainId }: { playerAddress: `0x${string}`, chainId: number }) {
   const [update, setUpdate] = useState<number>(0);
   const { writeContract, data: hash, isPending } = useWriteContract();
 
+  const gameAddress = getContractAddress(chainId);
+
   const { data: playerHSData, refetch: refetchPlayerHS } = useReadContract({
     abi: gameABI.abi,
-    address: GAME_ADDRESS,
+    address: gameAddress!,
     functionName: "scores",
     args: [playerAddress],
-    chainId: zkChain1.id,
+    chainId,
   });
   const { data: hsData, refetch: refetchGameHS } = useReadContract({
     abi: gameABI.abi,
-    address: GAME_ADDRESS,
+    address: gameAddress!,
     functionName: "highestScore",
-    chainId: zkChain1.id,
+    chainId,
   });
 
   const highestScore = (hsData as bigint) ?? 0;
@@ -36,9 +36,9 @@ export function GameView({ playerAddress }: { playerAddress: `0x${string}` }) {
     console.log("incrementing score..");
     writeContract({
       abi: gameABI.abi,
-      address: GAME_ADDRESS,
+      address: gameAddress!,
       functionName: "incrementScore",
-      chainId: zkChain1.id,
+      chainId,
     });
   }
 
@@ -53,7 +53,6 @@ export function GameView({ playerAddress }: { playerAddress: `0x${string}` }) {
 
   return (
     <div className="card">
-      <CheckIconWithText color={GREEN} text="Game contract detected" />
       <button className="buttonLarge" disabled={isPending} onClick={() => incrementScore()}>
         Increment Score
       </button>

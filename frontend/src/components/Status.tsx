@@ -1,14 +1,14 @@
 import Spinner from "./Spinner";
 
 export function Status({
-  color,
   text,
   isLoading,
 }: {
-  color: string;
   text: string;
   isLoading?: boolean;
 }) {
+  const color = "#87EDD0";
+
   return (
     <div
       style={{
@@ -21,8 +21,8 @@ export function Status({
     >
       <div style={{ display: "flex" }}>
         {isLoading ? (
-          <div style={{transform: "scale(0.6"}}>
-          <Spinner />
+          <div style={{ transform: "scale(0.6" }}>
+            <Spinner />
           </div>
         ) : (
           <svg width="10" height="10">

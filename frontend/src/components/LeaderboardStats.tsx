@@ -1,7 +1,7 @@
 import { useReadContract } from "wagmi";
 import * as leaderboardABI from "../../../contracts/artifacts/contracts/GameLeaderboard.sol/GameLeaderboard.json";
 import { LEADERBOARD_ADDRESS } from "../../utils/constants";
-import { wagmiConfig, zkChain2 } from "../../utils/wagmi";
+import { wagmiConfig, leaderboardChain } from "../../utils/wagmi";
 import { useEffect } from "react";
 
 export function LeaderboardStats({ update }: { update: number}) {
@@ -9,13 +9,13 @@ export function LeaderboardStats({ update }: { update: number}) {
     abi: leaderboardABI.abi,
     address: LEADERBOARD_ADDRESS,
     functionName: "highestScore",
-    chainId: zkChain2.id,
+    chainId: leaderboardChain.id,
   });
   const { data: winningData, refetch: refetchWinningData } = useReadContract({
     abi: leaderboardABI.abi,
     address: LEADERBOARD_ADDRESS,
     functionName: "winningChainId",
-    chainId: zkChain2.id,
+    chainId: leaderboardChain.id,
   });
 
   const highestScore = (hsData as bigint) ?? 0;

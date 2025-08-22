@@ -3,7 +3,7 @@ import { LeaderboardView } from "./components/LeaderboardView";
 import { GameView } from "./components/GameView";
 import { useAccount, useConnect, useSwitchChain } from "wagmi";
 import { injected } from "@wagmi/connectors";
-import { wagmiConfig, zkChain2 } from "../utils/wagmi";
+import { wagmiConfig, leaderboardChain } from "../utils/wagmi";
 
 function App() {
   const { connect } = useConnect();
@@ -30,7 +30,7 @@ function App() {
       ) : (
         <div>
            
-          {!isOnSupportedChain ? (
+          {!isOnSupportedChain || !chain ? (
             <>
             <div>Switch to a supported network</div>
             <SwitchChains/>
@@ -39,13 +39,13 @@ function App() {
             <>
               <h1>ZKsync Interop Messages Demo</h1>
               <h2>
-                You are connected to {chain?.name} ({chain?.id})
+                You are connected to {chain.name} ({chain.id})
               </h2>
               <SwitchChains/>
-              {chain?.id === zkChain2.id ? (
+              {chain.id === leaderboardChain.id ? (
                 <LeaderboardView playerAddress={address} />
               ) : (
-                <GameView playerAddress={address} />
+                <GameView playerAddress={address} chainId={chain.id} />
               )}
             </>
           )}
