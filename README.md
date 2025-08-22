@@ -291,7 +291,7 @@ bun dev
 
 Open the frontend at [`http://localhost:5173/`](http://localhost:5173/).
 
-In your browser wallet,and import the account that we used for testing.
+In your browser wallet import the account that we used for testing.
 The private key for this can be found in any of the `contracts/scripts` files.
 
 On the frontend, you should be able to add each network to your wallet by clicking on them.
