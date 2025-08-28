@@ -192,27 +192,25 @@ zkstack server --ignore-prerequisites --chain zk_chain_3
 ### Bridge funds to each chain
 
 Use a pre-configured rich wallet to bridge some ETH to each chain except for gateway.
-Double check the RPC endpoints for the chains inside `<YOUR_ECOSYSTEM_FOLDER>/zksync-era/chains/<CHAIN_NAME>/configs/general.yaml` and `<YOUR_ECOSYSTEM_FOLDER>/zksync-era/chains/era/configs/general.yaml` under `api.web3_json_rpc.http_url`.
-The commands below assumes the chains are running at ports `3050`, `3150`, and `3250`. The amount bridged here is arbitrary.
-Open a new terminal to run the commands.
+The command will bridge 1 ETH to `0x36615cf349d7f6344891b1e7ca7c72883f5dc049`.
 
 ```bash
-npx zksync-cli bridge deposit --rpc=http://localhost:3050 --l1-rpc=http://localhost:8545 --amount 10 --to 0x36615Cf349d7F6344891B1e7CA7C72883F5dc049 --pk 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110
+zkstack dev rich-account --chain zk_chain_1
 ```
 
 ```bash
-npx zksync-cli bridge deposit --rpc=http://localhost:3150 --l1-rpc=http://localhost:8545 --amount 10 --to 0x36615Cf349d7F6344891B1e7CA7C72883F5dc049 --pk 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110
+zkstack dev rich-account --chain zk_chain_2
 ```
 
 ```bash
-npx zksync-cli bridge deposit --rpc=http://localhost:3250 --l1-rpc=http://localhost:8545 --amount 10 --to 0x36615Cf349d7F6344891B1e7CA7C72883F5dc049 --pk 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110
+zkstack dev rich-account --chain zk_chain_3
 ```
 
 ## Deploying the Contracts
 
 ### Update the Chain Details in the Hardhat Config
 
-Check the chain RPC URLs and chain IDs in `contracts/hardhat.config.ts` to make sure they match what's in your chain config files.
+Check the chain RPC URLs and chain IDs in `contracts/hardhat.config.ts` to make sure they match what's in your chain's `general.yaml` config file.
 Use the first chain to be the leaderboard chain, and use the other 2 to be the game chains.
 
 ### Move into the `contracts` folder
