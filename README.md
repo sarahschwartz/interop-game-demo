@@ -18,6 +18,8 @@ and the chain ID where the global highest score comes from.
 
 This guide assumes you already have `zkstackup` and the required system dependencies installed as detailed in the [ZKsync Chains quickstart](https://docs.zksync.io/zk-stack/running/quickstart).
 
+You will also need to use node `v22.10.0` or higher as required by Hardhat `v3`.
+
 ## Setting Up the Ecosystem and Chains
 
 ### Install the latest version of `zkstack` CLI
@@ -208,9 +210,11 @@ zkstack dev rich-account --chain zk_chain_3
 
 ## Deploying the Contracts
 
-### Update the Chain Details in the Hardhat Config
+### Update the Chain Details
 
-Check the chain RPC URLs and chain IDs in `contracts/hardhat.config.ts` to make sure they match what's in your chain's `general.yaml` config file.
+Create a `.env` file using `.env.example` as a template.
+Check the chain RPC URLs to make sure they match what's in your chain's `general.yaml` config file.
+You can find this at `<YOUR_ECOSYSTEM>/zksync-era/chains/<CHAIN>/configs/general.yaml`.
 Use the first chain to be the leaderboard chain, and use the other 2 to be the game chains.
 
 ### Move into the `contracts` folder
@@ -242,7 +246,9 @@ bun deploy:game --network gameChain2
 
 ### Deploy the Game Leaderboard
 
-Update the approved game contract addresses in the `utils/deployedContracts.ts` file.
+Update the approved game contract addresses in the `.env` file.
+If you used different chain IDs than the ones in these instructions during the chain setup,
+update those in the `ignition/modules/Leaderboard.ts` file to match what is in your chain's `ZkStack.yaml` file.
 
 Then deploy the Game leaderboard contract:
 

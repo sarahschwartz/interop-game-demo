@@ -1,32 +1,67 @@
 import type { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
+
+import hardhatToolboxMochaEthersPlugin from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+
+import dotenv from "dotenv";
+dotenv.config();
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.24",
+  plugins: [hardhatToolboxMochaEthersPlugin],
+  solidity: {
+    profiles: {
+      default: {
+        version: "0.8.28",
+      },
+      production: {
+        version: "0.8.28",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    },
+  },
+  ignition: {
+    requiredConfirmations: 1
+  },
   networks: {
-  // If running locally with ZKsync Stack:
-  // Verify the RPC endpoints in zksync-era/chains/<CHAIN>/configs/general.yaml
+    hardhatMainnet: {
+      type: "edr-simulated",
+      chainType: "l1",
+    },
+    sepolia: {
+      type: "http",
+      chainType: "l1",
+      url: process.env.L1_RPC_URL!,
+     accounts: [process.env.WALLET_PRIVATE_KEY!],
+    },
     leaderboardChain: {
-      url: "http://localhost:3050",
+      type: "http",
+      url: process.env.LEADERBOARD_RPC_URL!,
+      chainType: "generic",
+      accounts: [process.env.WALLET_PRIVATE_KEY!],
     },
     gameChain1: {
-      url: "http://localhost:3150",
-      // Verify this value in zksync-era/chains/<CHAIN>/ZkStack.yaml
-      chainId: 5328,
+      type: "http",
+      url: process.env.GAME_CHAIN_1_RPC_URL!,
+      chainType: "generic",
+      accounts: [process.env.WALLET_PRIVATE_KEY!],
     },
     gameChain2: {
-      url: "http://localhost:3250",
-      chainId: 9313,
+      type: "http",
+      url: process.env.GAME_CHAIN_2_RPC_URL!,
+      chainType: "generic",
+      accounts: [process.env.WALLET_PRIVATE_KEY!],
     },
     gateway: {
-      url: "http://localhost:3350",
-      // Verify this value in zksync-era/chains/gateway/ZkStack.yaml
-      chainId: 506,
+      type: "http",
+      url: process.env.GATEWAY_RPC_URL!,
+      chainType: "generic",
+      accounts: [process.env.WALLET_PRIVATE_KEY!],
     },
-    l1: {
-      url: "http://localhost:8545",
-    },
-  }
+  },
 };
 
 export default config;

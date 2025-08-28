@@ -1,66 +1,85 @@
-import { ethers, config } from "hardhat";
+import { JsonRpcProvider } from "ethers";
+import hre from "hardhat";
+import { type HardhatEthers } from "@nomicfoundation/hardhat-ethers/types";
 import { Provider, utils, Wallet, types } from "zksync-ethers";
-import {
-  getGwBlockForBatch,
-  waitForGatewayInteropRoot,
-} from "../utils/interop-utils";
-import { Game, GameLeaderboard } from "../typechain-types";
-import { GAME_CHAIN_1_CONTRACT_ADDRESS, GAME_CHAIN_2_CONTRACT_ADDRESS } from "../utils/deployedContracts"
+import { Game, GameLeaderboard } from "../types/ethers-contracts/index.js";
 
-const PRIVATE_KEY =
-  "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
+const PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY;
+const GAME_CHAIN_1_RPC = process.env.GAME_CHAIN_1_RPC_URL;
+const GAME_CHAIN_2_RPC = process.env.GAME_CHAIN_2_RPC_URL;
+const LEADERBOARD_CHAIN_RPC = process.env.LEADERBOARD_RPC_URL;
+const GW_RPC = process.env.GATEWAY_RPC_URL;
+const L1_RPC = process.env.L1_RPC_URL;
+const GAME_CHAIN_1_CONTRACT_ADDRESS = process.env.GAME_CHAIN_1_CONTRACT_ADDRESS as `0x${string}`;
+const GAME_CHAIN_2_CONTRACT_ADDRESS = process.env.GAME_CHAIN_2_CONTRACT_ADDRESS as `0x${string}`;
+const LEADERBOARD_CONTRACT_ADDRESS = process.env.LEADERBOARD_CONTRACT_ADDRESS as `0x${string}`;
 
-const LEADERBOARD_ADDRESS = "0xf10A110E59a22b444c669C83b02f0E6d945b2b69";
-
-const networks = config.networks as any;
-const GAME_CHAIN_1_RPC = networks.gameChain1.url;
-const GAME_CHAIN_2_RPC = networks.gameChain2.url;
-const LEADERBOARD_CHAIN_RPC = networks.leaderboardChain.url;
-const GW_RPC = networks.gateway.url; // gateway
-const GW_CHAIN_ID = BigInt(networks.gateway.chainId);
-const providerl1 = new Provider(networks.l1.url);
-
-// Game Chain 1
-const providerChain1 = new Provider(GAME_CHAIN_1_RPC);
-const walletChain1 = new Wallet(PRIVATE_KEY, providerChain1, providerl1);
-
-// Game Chain 1
-const providerChain2 = new Provider(GAME_CHAIN_2_RPC);
-const walletChain2 = new Wallet(PRIVATE_KEY, providerChain2, providerl1);
-
-// Leaderboard
-const providerLeaderbaord = new Provider(LEADERBOARD_CHAIN_RPC);
-const walletLeaderboard = new Wallet(PRIVATE_KEY, providerLeaderbaord, providerl1);
-
-// ZKsync Gateway
-const gw = new ethers.JsonRpcProvider(GW_RPC);
+let ethers: HardhatEthers;
 
 async function main() {
-  await testGameChain(GAME_CHAIN_1_CONTRACT_ADDRESS, walletChain1);
+  if (
+    !PRIVATE_KEY ||
+    !GAME_CHAIN_1_RPC ||
+    !GAME_CHAIN_2_RPC ||
+    !LEADERBOARD_CHAIN_RPC ||
+    !GW_RPC ||
+    !L1_RPC ||
+    !GAME_CHAIN_1_CONTRACT_ADDRESS ||
+    !GAME_CHAIN_2_CONTRACT_ADDRESS ||
+    !LEADERBOARD_CONTRACT_ADDRESS
+  ) {
+    throw new Error("Missing env variable");
+  }
 
-  await testGameChain(GAME_CHAIN_2_CONTRACT_ADDRESS, walletChain2, true)
-}
+  const connection = await hre.network.connect();
+  ethers = connection.ethers;
 
-async function testGameChain(gameAddress: `0x${string}`, wallet: Wallet, getHigherScore = false){
-    const game: Game = await ethers.getContractAt(
-    "Game",
-    gameAddress,
-    wallet
+  const { walletChain1, walletChain2, walletLeaderboard } = getWallets();
+
+  await testGameChain(
+    GAME_CHAIN_1_CONTRACT_ADDRESS,
+    walletLeaderboard,
+    walletChain1
   );
 
-    // to get over 20 min score max
-  await getInitialHighScore(game, getHigherScore);
+  await testGameChain(
+    GAME_CHAIN_2_CONTRACT_ADDRESS,
+    walletLeaderboard,
+    walletChain2
+  );
+}
+
+async function testGameChain(
+  gameAddress: `0x${string}`,
+  walletLeaderboard: Wallet,
+  wallet: Wallet
+) {
+  const game: Game = await ethers.getContractAt(
+    "Game",
+    gameAddress,
+    wallet as any
+  );
+
+  // verify the score in the game leaderboard chain
+  const leaderboard: GameLeaderboard = await ethers.getContractAt(
+    "GameLeaderboard",
+    LEADERBOARD_CONTRACT_ADDRESS,
+    walletLeaderboard as any
+  );
+
+  // to get over 20 min score max
+  await getInitialHighScore(game, leaderboard);
 
   const iScore = await game.highestScore();
-  console.log("inital game high score", iScore);
+  console.log("Inital game high score", iScore);
 
   const tx = await game.incrementScore();
 
-  console.log("waiting for receipt...");
+  console.log("Waiting for receipt...");
   const receipt = await (
     await wallet.provider.getTransaction(tx.hash)
   ).waitFinalize();
-  console.log("got tx receipt");
+  console.log("Got tx receipt");
   if (receipt.l1BatchNumber === null || receipt.l1BatchTxIndex === null)
     throw new Error(
       "Could not find l1BatchNumber or l1BatchTxIndex in receipt"
@@ -77,7 +96,10 @@ async function testGameChain(gameAddress: `0x${string}`, wallet: Wallet, getHigh
     logs.transactionHash,
     logs.logIndex
   );
-  console.log("gw proof ready");
+  console.log("Gateway proof ready");
+
+  // ZKsync Gateway
+  const gw = new ethers.JsonRpcProvider(GW_RPC);
 
   // wait for the interop root to update
   const gwBlock = await getGwBlockForBatch(
@@ -85,24 +107,35 @@ async function testGameChain(gameAddress: `0x${string}`, wallet: Wallet, getHigh
     wallet.provider,
     gw
   );
-  await waitForGatewayInteropRoot(GW_CHAIN_ID, walletLeaderboard, gwBlock);
-  console.log("interop root is updated");
+  await waitForGatewayInteropRoot(gw, walletLeaderboard, gwBlock);
+  console.log("Interop root is updated");
 
   const score = await waitForScoreToIncrement(iScore, game);
-  console.log("new game high score", score);
+  console.log("New game high score", score);
 
   const message = ethers.solidityPacked(
     ["address", "uint256"],
     [wallet.address, score]
   );
 
-  // verify the score in the game leaderboard chain
-  const leaderboard: GameLeaderboard = await ethers.getContractAt(
-    "GameLeaderboard",
-    LEADERBOARD_ADDRESS,
-    walletLeaderboard
-  );
   const srcChainId = (await wallet.provider.getNetwork()).chainId;
+  const result = await leaderboard.checkVerifyScore(
+    srcChainId,
+    logs.l1BatchNumber,
+    logs.transactionIndex,
+    {
+      txNumberInBatch: logs.transactionIndex,
+      sender: gameAddress,
+      data: message,
+    },
+    gwProof
+  );
+
+  if (!result) {
+    console.log("😢 Message not verified");
+    return;
+  }
+
   await leaderboard.proveScore(
     srcChainId,
     logs.l1BatchNumber,
@@ -114,7 +147,7 @@ async function testGameChain(gameAddress: `0x${string}`, wallet: Wallet, getHigh
     },
     gwProof
   );
-  console.log("score is verified on leaderboard");
+  console.log("Score is verified on leaderboard");
 
   await utils.sleep(3_000);
 
@@ -122,6 +155,28 @@ async function testGameChain(gameAddress: `0x${string}`, wallet: Wallet, getHigh
   console.log("Leaderboard high score:", leaderboardHighScore);
   const winningChainId = await leaderboard.winningChainId();
   console.log("Winning chain ID:", winningChainId);
+}
+
+function getWallets() {
+  const providerl1 = new Provider(L1_RPC);
+
+  // Game Chain 1
+  const providerChain1 = new Provider(GAME_CHAIN_1_RPC);
+  const walletChain1 = new Wallet(PRIVATE_KEY!, providerChain1, providerl1);
+
+  // Game Chain 1
+  const providerChain2 = new Provider(GAME_CHAIN_2_RPC);
+  const walletChain2 = new Wallet(PRIVATE_KEY!, providerChain2, providerl1);
+
+  // Leaderboard wallet
+  const providerLeaderbaord = new Provider(LEADERBOARD_CHAIN_RPC);
+  const walletLeaderboard = new Wallet(
+    PRIVATE_KEY!,
+    providerLeaderbaord,
+    providerl1
+  );
+
+  return { walletChain1, walletChain2, walletLeaderboard };
 }
 
 async function waitForScoreToIncrement(initialScore: bigint, game: Game) {
@@ -173,19 +228,81 @@ async function getGwProof(
       return gwProofResp?.proof;
     }
     tries = tries + 1;
-    await utils.sleep(1_000);
+    await utils.sleep(3_000);
   }
   throw new Error("Gateway proof not ready yet");
 }
 
-async function getInitialHighScore(game: Game, getHigherScore = false) {
+async function getInitialHighScore(game: Game, leaderboard: GameLeaderboard) {
   let highScore: bigint = 20n;
-  const targetScore = getHigherScore ? 30n : 21n;
+  let targetScore = 21n;
+  const lastLeaderboardHighScore = await leaderboard.highestScore();
+  if (lastLeaderboardHighScore >= targetScore)
+    targetScore = lastLeaderboardHighScore + 1n;
   while (highScore < targetScore) {
     await game.incrementScore();
     await utils.sleep(1_000);
     highScore = await game.highestScore();
   }
+}
+
+// fetch gateway block number from executeTxHash
+export async function getGwBlockForBatch(
+  batch: bigint,
+  provider: Provider,
+  gw: JsonRpcProvider
+): Promise<bigint> {
+  while (true) {
+    const details = await provider.send("zks_getL1BatchDetails", [
+      Number(batch),
+    ]);
+    const execTx: string | null =
+      details?.executeTxHash &&
+      details.executeTxHash !==
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+        ? details.executeTxHash
+        : null;
+    if (execTx) {
+      const gwRcpt = await gw.getTransactionReceipt(execTx);
+      if (gwRcpt?.blockNumber !== undefined) return BigInt(gwRcpt.blockNumber);
+    }
+    await utils.sleep(1000);
+  }
+}
+
+// wait for the interop root to update on leaderboard chain
+export async function waitForGatewayInteropRoot(
+  gwProvider: JsonRpcProvider,
+  walletLeaderboard: Wallet,
+  gwBlock: bigint,
+  timeoutMs = 120_000
+): Promise<string> {
+  const GW_CHAIN_ID = (await gwProvider.getNetwork()).chainId;
+  // fetch the interop root from the leaderboard chain
+  const INTEROP_ROOT_STORAGE = "0x0000000000000000000000000000000000010008";
+  const InteropRootStorage = new ethers.Contract(
+    INTEROP_ROOT_STORAGE,
+    ["function interopRoots(uint256,uint256) view returns (bytes32)"],
+    walletLeaderboard as any
+  );
+
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const root: string = await InteropRootStorage.interopRoots(
+      GW_CHAIN_ID,
+      gwBlock
+    );
+    if (root && root !== "0x" + "0".repeat(64)) return root;
+    // send tx just to get leaderboard chain to seal batch
+    const t = await walletLeaderboard.sendTransaction({
+      to: walletLeaderboard.address,
+      value: BigInt(1),
+    });
+    await (
+      await walletLeaderboard.provider.getTransaction(t.hash)
+    ).waitFinalize();
+  }
+  throw new Error(`Leaderboard chain did not import interop root in time`);
 }
 
 main()
