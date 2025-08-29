@@ -86,6 +86,10 @@ export function GameView({
 
   return (
     <div className="card">
+      <div>
+        <p>Your High Score: {playerHighestScore}</p>
+        <p>Game Chain High Score: {highestScore}</p>
+      </div>
       <button
         className="buttonLarge"
         disabled={isPending}
@@ -112,11 +116,7 @@ export function GameView({
           </div>
         )}
       </div>
-      <div>
-        <h3>Your Stats</h3>
-        <p>Your High Score: {playerHighestScore}</p>
-        <p>Game Chain High Score: {highestScore}</p>
-      </div>
+      
       <LeaderboardStats update={update} />
     </div>
   );

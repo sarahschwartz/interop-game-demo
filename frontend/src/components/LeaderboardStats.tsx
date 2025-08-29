@@ -2,9 +2,9 @@ import { useReadContract } from "wagmi";
 import * as leaderboardABI from "../../../contracts/artifacts/contracts/GameLeaderboard.sol/GameLeaderboard.json";
 import { LEADERBOARD_ADDRESS } from "../../utils/constants";
 import { wagmiConfig, leaderboardChain } from "../../utils/wagmi";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 
-export function LeaderboardStats({ update }: { update: number}) {
+export function LeaderboardStats({ update }: { update: number }) {
   const { data: hsData, refetch: refetchHsData } = useReadContract({
     abi: leaderboardABI.abi,
     address: LEADERBOARD_ADDRESS,
@@ -26,18 +26,38 @@ export function LeaderboardStats({ update }: { update: number}) {
       (chain) => chain.id === parseInt(winningChainId.toString())
     )?.name ?? "Not found";
 
-     useEffect(() => {
-        refetchHsData();
-        refetchWinningData();
-      }, [update]);
+  useEffect(() => {
+    refetchHsData();
+    refetchWinningData();
+  }, [update]);
 
   return (
-    <div>
-      <h3>Leaderboard Chain</h3>
+    <div style={styles.stats}>
+      <div>
+        <h3 style={styles.heading}>🏆 Leaderboard Chain 🏆</h3>
+        <div style={styles.subheading}>
+          (Only high scores proved on the leaderboard chain will show here)
+        </div>
+      </div>
       <p>
-        Winning Chain: {winningChainName} ({winningChainId})
+        🥇 Winning Chain: {winningChainName} ({winningChainId})
       </p>
       <p>Highest Score: {highestScore}</p>
     </div>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  stats: {
+    border: "2px solid #fe9fe1",
+    backgroundColor: "#f8d4feff",
+    borderRadius: "8px",
+    marginTop: "24px",
+  },
+  heading: {
+    marginTop: "1em"
+  },
+  subheading: {
+    color: "#f81eb7ff",
+  },
+};

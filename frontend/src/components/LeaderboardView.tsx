@@ -94,6 +94,8 @@ export function LeaderboardView({
 
   return (
     <div className="card">
+      <div
+      style={styles.form}>
       {!isPending ? (
         <>
           <div
@@ -108,7 +110,7 @@ export function LeaderboardView({
             <input
               onChange={(e) => setTxHash(e.target.value)}
               placeholder="0x..."
-              style={{ ...styles.input, width: "100%" }}
+              style={{ ...styles.input, width: "calc(100% - 20px" }}
               type="text"
               value={txHash}
             />
@@ -205,11 +207,18 @@ export function LeaderboardView({
           )}
         </div>
       )}
+      </div>
       <LeaderboardStats update={update} />
     </div>
   );
 }
 
 const styles = {
-  input: { marginLeft: 4, padding: "4px", fontSize: "18px" },
+  input: { marginLeft: 4, padding: "4px", fontSize: "18px", backgroundColor: 'white', color: 'black' },
+  form: {
+      border: "2px solid #fe9fe1",
+      padding: '8px',
+      // backgroundColor: '#333',
+      borderRadius: '8px',
+    }
 };

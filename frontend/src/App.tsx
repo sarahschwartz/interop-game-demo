@@ -13,9 +13,9 @@ function App() {
 
   const SwitchChains = () => (
     <div style={{display: "flex", gap: "12px", justifyContent: "center"}}>
-      {chains.map((chain) => (
-        <button className="buttonSmall" key={chain.id} onClick={() => switchChain({ chainId: chain.id })}>
-          {chain.name}
+      {chains.map((c) => (
+        <button className={chain?.id === c.id ? "buttonSmall activeNetwork" :"buttonSmall"} key={c.id} onClick={() => switchChain({ chainId: c.id })}>
+          {c.name}
         </button>
       ))}
     </div>
@@ -37,11 +37,11 @@ function App() {
             </>
           ) : (
             <>
-              <h1>ZKsync Interop Messages Demo</h1>
+              <h1>💞 ZKsync Interop Messages Demo 💞</h1>
+              <SwitchChains/>
               <h2>
                 You are connected to {chain.name} ({chain.id})
               </h2>
-              <SwitchChains/>
               {chain.id === leaderboardChain.id ? (
                 <LeaderboardView playerAddress={address} />
               ) : (
