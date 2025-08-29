@@ -42,15 +42,15 @@ export function LeaderboardStats({ update }: { update: number }) {
       <p>
         🥇 Winning Chain: {winningChainName} ({winningChainId})
       </p>
-      <p>Highest Score: {highestScore}</p>
+      <p>🧡 Highest Score: {highestScore}</p>
     </div>
   );
 }
 
 const styles: { [key: string]: React.CSSProperties } = {
   stats: {
-    border: "2px solid #fe9fe1",
-    backgroundColor: "#f8d4feff",
+    border: "2px solid #ff735e",
+    backgroundColor: "#fbecc6ff",
     borderRadius: "8px",
     marginTop: "24px",
   },
@@ -58,6 +58,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginTop: "1em"
   },
   subheading: {
-    color: "#f81eb7ff",
+    color: "#ff735e",
   },
 };

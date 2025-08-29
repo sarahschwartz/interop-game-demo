@@ -5,7 +5,7 @@
   font-size: 16px;
   color-scheme: light dark;
   color: #9c40d9;
-  background-color: #fbeafe;
+  background-color: white;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -37,7 +37,7 @@ button {
   margin: 12px 0;
   font-weight: 500;
   font-family: inherit;
-  background-color: #fe9fe1;
+  background-color: #fa9c8e;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -46,7 +46,7 @@ button {
   font-size: 1em;
 }
 .activeNetwork {
-  background-color: #f577cf;
+  background-color: #ff735e;
 }
 .buttonLarge {
   padding: 0.6em 1.2em;

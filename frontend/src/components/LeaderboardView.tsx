@@ -216,9 +216,6 @@ export function LeaderboardView({
 const styles = {
   input: { marginLeft: 4, padding: "4px", fontSize: "18px", backgroundColor: 'white', color: 'black' },
   form: {
-      border: "2px solid #fe9fe1",
       padding: '8px',
-      // backgroundColor: '#333',
-      borderRadius: '8px',
     }
 };
