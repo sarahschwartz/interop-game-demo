@@ -3,13 +3,13 @@ import { LeaderboardView } from "./components/LeaderboardView";
 import { GameView } from "./components/GameView";
 import { useAccount, useConnect, useSwitchChain } from "wagmi";
 import { injected } from "@wagmi/connectors";
-import { wagmiConfig, leaderboardChain } from "../utils/wagmi";
+import { leaderboardChain } from "../utils/wagmi";
 
 function App() {
   const { connect } = useConnect();
   const { address, isConnected, chain } = useAccount();
   const { chains, switchChain } = useSwitchChain()
-  const isOnSupportedChain = wagmiConfig.chains.some((c) => c.id === chain?.id);
+  const isOnSupportedChain = chains.some((c) => c.id === chain?.id);
 
   const SwitchChains = () => (
     <div style={{display: "flex", gap: "12px", justifyContent: "center"}}>
