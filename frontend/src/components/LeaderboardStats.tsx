@@ -3,6 +3,7 @@ import * as leaderboardABI from "../../../contracts/artifacts/contracts/GameLead
 import { LEADERBOARD_ADDRESS } from "../../utils/constants";
 import { wagmiConfig, leaderboardChain } from "../../utils/wagmi";
 import React, { useEffect } from "react";
+import { LeaderboardTable } from "./LeaderboardTable";
 
 export function LeaderboardStats({ update }: { update: number }) {
   const { data: hsData, refetch: refetchHsData } = useReadContract({
@@ -43,6 +44,7 @@ export function LeaderboardStats({ update }: { update: number }) {
         🥇 Winning Chain: {winningChainName} ({winningChainId})
       </p>
       <p>🧡 Highest Score: {highestScore}</p>
+      <LeaderboardTable update={update}/>
     </div>
   );
 }
