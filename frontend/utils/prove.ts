@@ -1,6 +1,6 @@
 import { Provider, types, utils, Contract, Wallet } from "zksync-ethers";
 import { ethers, JsonRpcProvider } from "ethers";
-import { GATEWAY_CHAIN_ID, GATEWAY_RPC, l1RPC } from "./constants";
+import { GATEWAY_RPC } from "./constants";
 import { leaderboardChain } from "./wagmi";
 
 export async function checkIfTxIsFinalized(txHash: string, provider: Provider) {
@@ -47,7 +47,8 @@ export async function waitForInteropRoot(
     provider,
     gw
   );
-  await waitForGatewayInteropRoot(BigInt(GATEWAY_CHAIN_ID), gwBlock);
+  const chainId = (await gw.getNetwork()).chainId;
+  await waitForGatewayInteropRoot(chainId, gwBlock);
   console.log("interop root is updated");
 }
 
@@ -157,8 +158,7 @@ export async function waitForGatewayInteropRoot(
   const PRIVATE_KEY =
     "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
   const providerChain2 = new Provider(leaderboardChain.rpcUrls.default.http[0]);
-  const providerl1 = new Provider(l1RPC);
-  const walletChain2 = new Wallet(PRIVATE_KEY, providerChain2, providerl1);
+  const walletChain2 = new Wallet(PRIVATE_KEY, providerChain2);
   // fetch the interop root from destiination chain
   const INTEROP_ROOT_STORAGE = "0x0000000000000000000000000000000000010008";
   const InteropRootStorage = new Contract(
