@@ -37,7 +37,7 @@ function App() {
             </>
           ) : (
             <>
-              <h1>💞 ZKsync Interop Messages Demo 💞</h1>
+              <h1>ZKsync Interop Messages Demo</h1>
               <SwitchChains/>
               <h2>
                 You are connected to {chain.name} ({chain.id})
