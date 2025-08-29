@@ -62,8 +62,8 @@ button:focus-visible {
 
 #toast {
   visibility: hidden;
-  background-color: #fe9fe1;
-  color: #fff;
+  background-color: #fa9c8e;
+  color: white;
   text-align: center;
   border-radius: 8px;
   padding: 16px;
