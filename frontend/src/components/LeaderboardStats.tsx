@@ -33,7 +33,7 @@ export function LeaderboardStats({ update }: { update: number}) {
 
   return (
     <div>
-      <h3>Network Leaderboard</h3>
+      <h3>Leaderboard Chain</h3>
       <p>
         Winning Chain: {winningChainName} ({winningChainId})
       </p>
